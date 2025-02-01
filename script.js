@@ -21,7 +21,6 @@ const weather_codes = {
      99: { name: "Mưa Đá Lớn", icons: { day: "heavy-hail.svg", night: "heavy-hail.svg" } }
 };
 
-// Lấy các phần tử DOM chỉ một lần
 const searchBox = document.getElementById("search-box"),
       weatherDetailsElem = document.getElementById("weather-details"),
       locationTxt = document.getElementById("location"),
@@ -34,7 +33,6 @@ const searchBox = document.getElementById("search-box"),
       dailyForecastElems = document.getElementById("daily-forecast"),
       errTxt = document.getElementById("errTxt");
 
-// Hàm lấy tọa độ từ tên địa điểm
 async function getLocation(location) {
      try {
           const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${location}&count=1&language=vi&format=json`);
@@ -49,7 +47,7 @@ async function getLocation(location) {
 async function getWeather(location) {
      try {
           const { lat, lon, name } = await getLocation(location);
-          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min`);
+          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m,pressure_msl,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min`);
           const data = await res.json();
           return { name, current: data.current, daily: data.daily };
      } catch {
@@ -58,7 +56,7 @@ async function getWeather(location) {
 }
 
 function updateWeatherUI(weather) {
-     const { temperature_2m, relative_humidity_2m, is_day, weather_code, wind_speed_10m } = weather.current;
+     const { temperature_2m, relative_humidity_2m, is_day, weather_code, wind_speed_10m, pressure_msl, cloud_cover } = weather.current;
      const { weather_code: daily_weather_code, temperature_2m_max, temperature_2m_min, time } = weather.daily;
 
      const weatherCondition = weather_codes[weather_code] || { name: "Không xác định", icons: { day: "unknown.svg", night: "unknown.svg" } };
@@ -77,8 +75,7 @@ function updateWeatherUI(weather) {
                <div class="card">
                     <img src="assets/${dayCondition.icons.day}" alt="weather-icon" width="100" height="100"/>
                     <div class="temps">
-                        <span class="temp" title="Nhiệt độ thấp nhất">${temperature_2m_min[i]}°C</span> -
-                         <span class="temp" title="Nhiệt độ cao nhất">${temperature_2m_max[i]}°C</span> 
+                        <span class="temp">${temperature_2m_min[i]}°C</span> - <span class="temp">${temperature_2m_max[i]}°C</span> 
                     </div>
                     <p class="date">${new Date(timestamp).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "2-digit" })}</p>
                </div>`;
@@ -92,7 +89,7 @@ searchBox.addEventListener("submit", async (e) => {
      weatherDetailsElem.classList.remove("active");
      dailyForecastElems.innerHTML = "";
      errTxt.textContent = "";
-
+       
      const location = locationInput.value.trim();
      if (!location) {
           errTxt.textContent = "Vui lòng nhập tên thành phố";
